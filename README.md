@@ -1,6 +1,7 @@
 IPOpt: Investment Portfolio Optimization
 
 Модули:
+
 EMOC - NSGA-II для кластеризации, просто референс, на базе которого можно написать NSGA-II
 
 
