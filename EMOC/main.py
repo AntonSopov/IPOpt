@@ -2,6 +2,9 @@ from Nsga2 import *
 from Clustering import *
 import Global as Gl
 
+#Boobs
+#Boobs
+
 if __name__ == '__main__':
     filename = ['Spheres 2 2000 10.csv', 'Rings 1500 3.csv']
     save_name = ['Spheres', 'Rings']
