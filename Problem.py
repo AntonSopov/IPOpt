@@ -9,7 +9,10 @@ set_parameters: опционально, указывает дополнител�
 
 objIncome: целевая функция 1 (прибыль). возвращает вещественное значение
 objRisk: целевая функция 2 (риск). возвращает вещественное значение
-constraints: проверка ограничений (<=). возвращает массив вещественных значений (разность между левой и правой частями). если число превышает 0 - это ограничение не выполняется
+constraints: проверка ограничений (<=). возвращает массив вещественных значений (разность между левой и правой частями) и допустимость решения. если число превышает 0 - это ограничение не выполняется
+
+evaluate: обновляет целевую функцию и ограничения у индивида (Solution)
+evaluate_pop: делает это для всей популяции (Population)
 '''
 
 import numpy as np
@@ -19,80 +22,83 @@ import Nsga2
 
 class Problem:
     # region parameters
-    data = None                 #  list of data files
-    filename = None             #  list of string, data filenames
-    project_names = None        #  list of lists of string, project names per subdivision
+    _data = None                 #  list of data files
+    _filename = None             #  list of string, data filenames
+    _project_names = None        #  list of lists of string, project names per subdivision
 
     # project parameters
-    inc = None                  # П_ij
-    risk = None                 # R_ij
-    cost = None                 # b_ij
-    N = None                    # N_i
-    C = None                    # C
+    _inc = None                  # П_ij
+    _risk = None                 # R_ij
+    _cost = None                 # b_ij
+    _N = None                    # N_i
+    _C = None                    # C
+    _encoding_length = None      # the sum of N_i
 
     # problem input parameters
-    budget = None               # B_i
-    overallBudget = None        # B_C
-    investmentBudget = None     # B_E
-    maxIncome = None            # I (not stated in colab)
-    maxRisk = None              # p
+    _budget = None               # B_i
+    _overallBudget = None        # B_C
+    _investmentBudget = None     # B_E
+    _maxIncome = None            # I (not stated in colab)
+    _maxRisk = None              # p
 
     # logs and reports
-    verbose = None
+    _verbose = None
 
     # optimization
-    num_of_constraints = None
+    _num_of_constraints = None
+    _total_evaluations = None
 
     # endregion parameters
 
 
     # region init
     def __init__(self, filenames, separator, verbose = 0):
-        self.verbose = verbose
+        self._verbose = verbose
 
-        self.filename = filenames
-        self.C = len(filenames)
-        self.N = np.empty(self.C)
+        self._filename = filenames
+        self._C = len(filenames)
+        self._N = np.empty(self._C)
 
         # data loading
-        self.budget = np.empty(self.C)
+        self._budget = np.empty(self._C)
 
-        for i in range(self.C):
+        for i in range(self._C):
             # reading budget
-            self.budget[i] = pd.read_csv(filenames[i], sep = separator, header = None, nrows = 1).to_numpy()[0][0]  # that's an ugly way to read a number from the first row... but it works!
+            self._budget[i] = pd.read_csv(filenames[i], sep = separator, header = None, nrows = 1).to_numpy()[0][0]  # that's an ugly way to read a number from the first row... but it works!
 
             # data
-            self.data[i] = pd.read_csv(filenames[i], sep = separator, skiprows = [0])
-            self.N[i] = self.data[i].shape[0]
+            self._data[i] = pd.read_csv(filenames[i], sep = separator, skiprows = [0])
+            self._N[i] = self._data[i].shape[0]
 
         # extracting everything from data
-        self.project_names = []
-        self.inc = []
-        self.risk = []
-        self.cost = []
+        self._project_names = []
+        self._inc = []
+        self._risk = []
+        self._cost = []
 
-        for i in range(self.C):
-            if 'Название' in self.data.columns:
-                self.project_names.append(self.data['Название'].to_list())
-            self.inc[i].append( self.data['Прибыль'].to_numpy() )
-            self.risk[i].append( self.data['Риск'].to_numpy() )
-            self.cost[i].append( self.data['Стоимость'].to_numpy() )
+        for i in range(self._C):
+            if 'Название' in self._data.columns:
+                self._project_names.append(self._data['Название'].to_list())
+            self._inc[i].append( self._data['Прибыль'].to_numpy() )
+            self._risk[i].append( self._data['Риск'].to_numpy() )
+            self._cost[i].append( self._data['Стоимость'].to_numpy() )
         
         # additional calculations
-        self.overallBudget = np.sum(self.budget)
+        self._overallBudget = np.sum(self._budget)
+        self._encoding_length = np.sum(self._N)
     # endregion init
 
     # region set_parameters
     def set_parameters(self, maxIncome = None, maxRisk = None):
-        self.maxIncome = maxIncome
-        self.maxRisk = maxRisk
+        self._maxIncome = maxIncome
+        self._maxRisk = maxRisk
 
         if maxIncome == None and maxRisk == None:
-            self.num_of_constraints = self.C + 2
+            self._num_of_constraints = self._C + 2
         elif maxIncome == None or maxRisk == None:
-            self.num_of_constraints = self.C + 1
+            self._num_of_constraints = self._C + 1
         else:
-            self.num_of_constraints = self.C
+            self._num_of_constraints = self._C
     # endregion set_parameters
 
     def optimize(self, method = 'nsga2'):
@@ -105,18 +111,18 @@ class Problem:
     # first objective: Income -> max
     def objIncome(self, x):
         income = 0
-        for i in range(self.C):
-            for j in range(self.N[i]):
-                income += self.inc[i][j] * x[i][j]
+        for i in range(self._C):
+            for j in range(self._N[i]):
+                income += self._inc[i][j] * x[i][j]
         
-        return income
+        return -income
 
     # second objective: Risk -> min
     def objRisk(self, x):
         r = 1. / np.sum(x)
-        for i in range(self.C):
-            for j in range(self.N[i]):
-                r += self.risk[i][j] * x[i][j]
+        for i in range(self._C):
+            for j in range(self._N[i]):
+                r += self._risk[i][j] * x[i][j]
         
         return r
     
@@ -125,27 +131,66 @@ class Problem:
     # region constraints
     # all of them are inequality constraints
     def constraints(self, x):
-        constr = np.empty(self.num_of_constraints)
-
-        # first constraint: overall cost does not exceed the overall budget + investment budget
-        constr[0] = overall_summ - (self.overallBudget - self.investmentBudget)
+        constr = np.empty(self._num_of_constraints)
         
-        # next i constraints: cost of the projects per each subdivision does not exceed the budget
+        # second i constraints: cost of the projects per each subdivision does not exceed the budget
         overall_summ = 0
-        for i in range(self.C):
+        for i in range(self._C):
             summ = 0
-            for j in range(self.N[i]):
-                summ += self.cost[i][j] * x[i][j]
-            constr[i + 1] = summ - self.budget[i]
+            for j in range(self._N[i]):
+                summ += self._cost[i][j] * x[i][j]
+            constr[i + 1] = summ - self._budget[i]
             overall_summ += summ
         
-        # Last two optional constraints: Overall Income <= Max Income  &&  Overall Risk <= Max Risk
-        if self.maxIncome != None and self.maxRisk != None:
-            constr[-2] = self.objIncome(x) - self.maxIncome
-            constr[-1] = self.objRisk(x) - self.maxRisk
-        elif self.maxIncome != None:
-            constr[-1] = self.objIncome(x) - self.maxIncome
-        elif self.maxRisk != None:
-            constr[-1] = self.objRisk(x) - self.maxRisk
+        # first constraint: overall cost does not exceed the overall budget + investment budget
+        constr[0] = overall_summ - (self._overallBudget - self._investmentBudget)
 
-        return constr
+        # Last two optional constraints: Overall Income <= Max Income  &&  Overall Risk <= Max Risk
+        if self._maxIncome != None and self._maxRisk != None:
+            constr[-2] = self.objIncome(x) - self._maxIncome
+            constr[-1] = self.objRisk(x) - self._maxRisk
+        elif self._maxIncome != None:
+            constr[-1] = self.objIncome(x) - self._maxIncome
+        elif self._maxRisk != None:
+            constr[-1] = self.objRisk(x) - self._maxRisk
+
+        # is x feasible
+        feasibility = True
+        for i in range(self._num_of_constraints):
+            if constr[i] > 0:
+                feasibility = False
+                break
+
+        return constr, feasibility
+    
+    # region evaluate functions
+    # evaluate // encoding
+    def evaluate(self, solution):
+        self._total_evaluations += 1
+        enc = solution.encoding()
+
+        # evaluating objectives and constraints, saving information in the solution object
+        obj1 = self.objIncome(enc)
+        solution.set_objective(0, obj1)
+
+        obj2 = self.objRisk(enc)
+        solution.set_objective(1, obj2)
+
+        constr, feasibility = self.constraints(enc)
+        solution.set_constraints(constr)
+        solution.set_feaibility(feasibility)
+
+        solution.set_eval(self._total_evaluations)
+    
+    # evaluate // population
+    def evaluate_pop(self, population):
+        for i in range(population.size()):
+            self.evaluate(population[i])
+    
+    # endregion evaluate functions
+
+
+
+    # getter functions
+    def encoding_length(self): return self._encoding_length
+    def num_constraints(self): return self._C
