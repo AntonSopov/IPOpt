@@ -56,8 +56,9 @@ class Problem:
         self._verbose = verbose
 
         self._filename = filenames
+        self._data = []
         self._C = len(filenames)
-        self._N = np.empty(self._C)
+        self._N = np.empty(self._C, dtype = int)
 
         # data loading
         self._budget = np.empty(self._C)
@@ -67,29 +68,30 @@ class Problem:
             self._budget[i] = pd.read_csv(filenames[i], sep = separator, header = None, nrows = 1).to_numpy()[0][0]  # that's an ugly way to read a number from the first row... but it works!
 
             # data
-            self._data[i] = pd.read_csv(filenames[i], sep = separator, skiprows = [0])
+            self._data.append( pd.read_csv(filenames[i], sep = separator, skiprows = [0]) )
             self._N[i] = self._data[i].shape[0]
 
         # extracting everything from data
-        self._project_names = []
+        self._project_names = [] # [] for i in range(self._C)
         self._inc = []
         self._risk = []
         self._cost = []
 
         for i in range(self._C):
-            if 'Название' in self._data.columns:
-                self._project_names.append(self._data['Название'].to_list())
-            self._inc[i].append( self._data['Прибыль'].to_numpy() )
-            self._risk[i].append( self._data['Риск'].to_numpy() )
-            self._cost[i].append( self._data['Стоимость'].to_numpy() )
+            if 'Название' in self._data[i].columns:
+                self._project_names.append(self._data[i]['Название'].to_list())
+            self._inc.append( self._data[i]['Прибыль'].to_numpy() )
+            self._risk.append( self._data[i]['Риск'].to_numpy() )
+            self._cost.append( self._data[i]['Стоимость'].to_numpy() )
         
         # additional calculations
         self._overallBudget = np.sum(self._budget)
-        self._encoding_length = np.sum(self._N)
+        self._encoding_length = int(np.sum(self._N))
     # endregion init
 
     # region set_parameters
-    def set_parameters(self, maxIncome = None, maxRisk = None):
+    def set_parameters(self, investmentBudget = 0.0, maxIncome = None, maxRisk = None):
+        self._investmentBudget = investmentBudget
         self._maxIncome = maxIncome
         self._maxRisk = maxRisk
 
@@ -101,10 +103,11 @@ class Problem:
             self._num_of_constraints = self._C
     # endregion set_parameters
 
-    def optimize(self, method = 'nsga2'):
-        1
-
-
+    def optimize(self, method = 'nsga2', opt_params = {}):
+        self._total_evaluations = 0
+        if method == 'nsga2':
+            optimizer = Nsga2.Nsga2(opt_params, verbose = 1)
+            optimizer.run()
 
 
     # region objectives
@@ -119,10 +122,15 @@ class Problem:
 
     # second objective: Risk -> min
     def objRisk(self, x):
-        r = 1. / np.sum(x)
+        r = 0
         for i in range(self._C):
             for j in range(self._N[i]):
                 r += self._risk[i][j] * x[i][j]
+        
+        summ = 0
+        for i in range(self._C):
+            summ += np.sum(x[i])
+        r /= summ
         
         return r
     
@@ -167,7 +175,7 @@ class Problem:
     # evaluate // encoding
     def evaluate(self, solution):
         self._total_evaluations += 1
-        enc = solution.encoding()
+        enc = self.transform_encoding(solution.encoding())
 
         # evaluating objectives and constraints, saving information in the solution object
         obj1 = self.objIncome(enc)
@@ -186,6 +194,15 @@ class Problem:
     def evaluate_pop(self, population):
         for i in range(population.size()):
             self.evaluate(population[i])
+
+    # 1D array into a list of arrays of shape N[i] 
+    def transform_encoding(self, x):
+        transf = []
+        ctr = 0
+        for i in range(self._C):
+            transf.append(np.array(x[ctr:ctr + self._N[i]]))
+            ctr += self._N[i]
+        return transf
     
     # endregion evaluate functions
 
@@ -194,3 +211,4 @@ class Problem:
     # getter functions
     def encoding_length(self): return self._encoding_length
     def num_constraints(self): return self._C
+    def total_evaluations(self): return self._total_evaluations

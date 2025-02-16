@@ -135,13 +135,13 @@ class Nsga2:
 
         self._generation = 1
         if self.verbose: print('Starting main cycle...')
-        while self._evaluator.total_evaluations() <= self._max_eval:
-            if self.verbose: print('Generation:', self._generation)
+        while Gl.problem.total_evaluations() <= self._max_eval:
+            if self.verbose: print('Generation:', self._generation, 'FEs:', Gl.problem.total_evaluations())
             # selection, crossover, mutation
             self.genetic_operators()
 
             # evaluating offspring
-            self._evaluator.evaluate_pop(self._offspring)
+            Gl.problem.evaluate_pop(self._offspring)
 
             # solution replacement
             self.survival_selection()
@@ -167,7 +167,7 @@ class Nsga2:
     
     def generate_evaluate_initial_population(self):
         # evaluating initial solutions
-        self._evaluator.evaluate_pop(self._auxiliary)
+        Gl.problem.evaluate_pop(self._auxiliary)
 
         # population of nonselected individuals
         pop_to_remove = Population(self._auxiliary.size() - self._population_size)
@@ -203,7 +203,7 @@ class Nsga2:
     
     def binary_tournament(self, s1, s2):
         # dominance comparison
-        dominance = self.pareto_dominance(s1, s2)
+        dominance = self._pareto_dominance(s1, s2)
         if dominance == 1:
             return s1
         if dominance == 2:
@@ -276,7 +276,7 @@ class Nsga2:
         phi2 = self.constraint_violation(sol2)
         # if violation function values are higher than eps or are equal, then compare solution by pareto dominance
         if (phi1 < self._eps and phi2 < self._eps) or (phi1 == phi2):
-            return self.pareto_dominance_basic()
+            return self.pareto_dominance_basic(sol1, sol2)
         # otherwise, compare by violation
         else:
             if phi1 < phi2:
@@ -302,7 +302,7 @@ class Nsga2:
             for q in range(size):
                 if p != q:
                      # 1 dominates, 2 is dominated, 3 equal, 0 incomparable
-                    dominance = self.pareto_dominance(population[p].objective(), population[q].objective())
+                    dominance = self._pareto_dominance(population[p], population[q])
                     
                     # if p dominates q => q goes in _nds_s[p]
                     if dominance == 1:
@@ -443,6 +443,6 @@ class Nsga2:
     def constraint_violation(self, sol):
         constr = sol.constraints()
         summ = 0
-        for i in range(Gl.problem.num_constraints):
+        for i in range(Gl.problem.num_constraints()):
             summ += np.max([0, constr[i]])
         return summ
