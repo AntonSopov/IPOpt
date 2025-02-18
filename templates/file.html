@@ -1,0 +1,31 @@
+﻿<!-- index.html -->
+
+<body>
+
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
+
+    <form action="" method="post">
+        <p>
+            <label for="username">Количество поколений</label>
+            <input type="text" name="username">
+        </p>
+        <p>
+            <label for="password">Количество потомков</label>
+            <input type="text" name="password">
+        </p>
+        <p>
+            <input type="submit">
+        </p>
+    </form>
+
+
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="file">Выберите файлы для загрузки:</label>
+        <input type="file" id="file" name="file" multiple>
+        <input type="submit" value="Загрузить">
+    </form>
+
+</body>
