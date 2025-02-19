@@ -96,11 +96,11 @@ class Problem:
         self._maxRisk = maxRisk
 
         if maxIncome == None and maxRisk == None:
-            self._num_of_constraints = self._C + 2
+            self._num_of_constraints = self._C + 3
         elif maxIncome == None or maxRisk == None:
-            self._num_of_constraints = self._C + 1
+            self._num_of_constraints = self._C + 2
         else:
-            self._num_of_constraints = self._C
+            self._num_of_constraints = self._C + 1
     # endregion set_parameters
 
     def optimize(self, method = 'nsga2', opt_params = {}):
@@ -108,6 +108,7 @@ class Problem:
         if method == 'nsga2':
             optimizer = Nsga2.Nsga2(opt_params, verbose = 1)
             optimizer.run()
+            optimizer.output_generation()
 
 
     # region objectives
@@ -138,10 +139,10 @@ class Problem:
 
     # region constraints
     # all of them are inequality constraints
-    def constraints(self, x):
+    def constraints(self, x, income, risk):
         constr = np.empty(self._num_of_constraints)
         
-        # second i constraints: cost of the projects per each subdivision does not exceed the budget
+        # second C constraints: cost of the projects per each subdivision does not exceed the budget
         overall_summ = 0
         for i in range(self._C):
             summ = 0
@@ -155,12 +156,12 @@ class Problem:
 
         # Last two optional constraints: Overall Income <= Max Income  &&  Overall Risk <= Max Risk
         if self._maxIncome != None and self._maxRisk != None:
-            constr[-2] = self.objIncome(x) - self._maxIncome
-            constr[-1] = self.objRisk(x) - self._maxRisk
+            constr[-2] = income - self._maxIncome
+            constr[-1] = risk - self._maxRisk
         elif self._maxIncome != None:
-            constr[-1] = self.objIncome(x) - self._maxIncome
+            constr[-1] = income - self._maxIncome
         elif self._maxRisk != None:
-            constr[-1] = self.objRisk(x) - self._maxRisk
+            constr[-1] = risk - self._maxRisk
 
         # is x feasible
         feasibility = True
@@ -184,7 +185,7 @@ class Problem:
         obj2 = self.objRisk(enc)
         solution.set_objective(1, obj2)
 
-        constr, feasibility = self.constraints(enc)
+        constr, feasibility = self.constraints(enc, obj1, obj2)
         solution.set_constraints(constr)
         solution.set_feaibility(feasibility)
 
@@ -210,5 +211,5 @@ class Problem:
 
     # getter functions
     def encoding_length(self): return self._encoding_length
-    def num_constraints(self): return self._C
+    def num_constraints(self): return self._num_of_constraints
     def total_evaluations(self): return self._total_evaluations

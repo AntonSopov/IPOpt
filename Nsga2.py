@@ -91,6 +91,11 @@ class Nsga2:
         else:
             self._eps = 0
 
+        if parameters['filename'] != None:
+            self._filename = parameters['filename']
+        else:
+            self._filename = 'file'
+
         self._configure()
 
     def _configure(self):
@@ -274,7 +279,7 @@ class Nsga2:
     def pareto_dominance_constrained(self, sol1, sol2):
         phi1 = self.constraint_violation(sol1)
         phi2 = self.constraint_violation(sol2)
-        # if violation function values are higher than eps or are equal, then compare solution by pareto dominance
+        # if violation function values are lower than eps or are equal, then compare solution by pareto dominance
         if (phi1 < self._eps and phi2 < self._eps) or (phi1 == phi2):
             return self.pareto_dominance_basic(sol1, sol2)
         # otherwise, compare by violation
@@ -296,6 +301,9 @@ class Nsga2:
             self._nds_front[p][0] = 0
             self._nds_s[p][0] = 0
             self._nds_n[p] = 0
+
+        #if Gl.problem.total_evaluations() > 1950:
+        #    1
 
         # first front
         for p in range(size):
@@ -446,3 +454,40 @@ class Nsga2:
         for i in range(Gl.problem.num_constraints()):
             summ += np.max([0, constr[i]])
         return summ
+    
+    # endregion constraint handling
+
+
+    # region results function
+    def output_generation(self):
+        self.nondominated_sorting(self._population)
+
+        # initializing dataframes 
+        df_measures = pd.DataFrame()
+        df_portfolio = pd.DataFrame()
+
+        # initializing measure lists
+        income_risk = []
+
+        ### Measures file
+        ctr = 0     # how many solutions in the pareto front
+        for i in range(self._population_size):
+            if self._population[i].rank() == 1: # adding only solution from pareto front (rank == 1)
+                # objectives
+                income = -self._population[i].objective(0)
+                risk = self._population[i].objective(1)
+                if not ([income, risk] in income_risk): # чтобы не повторялось
+                    income_risk.append([income, risk])
+
+                    ### Portfolio file (current solution)
+                    df_portfolio[str(ctr)] = self._population[i].encoding()
+                    ctr += 1
+        
+        # finalizing measures dataframe
+        income_risk_array = np.array(income_risk)
+        df_measures['income'] = income_risk_array[:,0]
+        df_measures['risk'] = income_risk_array[:,1]
+        
+        # saving dataframes
+        df_measures.to_csv(f'{self._filename}_measures.csv')
+        df_portfolio.to_csv(f'{self._filename}_portfolio.csv')
