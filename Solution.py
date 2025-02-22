@@ -56,8 +56,8 @@ class Solution:
     def set_objective(self, i, val): self._objective[i] = val
     def constraints(self, i = None): return self._constraints if i == None else self._constraints[i]
     def set_constraints(self, val): self._constraints = val
-    def feaibility(self): return self._feasibility
-    def set_feaibility(self, val): self._feasibility = val
+    def feasibility(self): return self._feasibility
+    def set_feasibility(self, val): self._feasibility = val
 
     def eval(self): return self._eval
     def set_eval(self, val): self._eval = val

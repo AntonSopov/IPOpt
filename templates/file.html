@@ -12,20 +12,7 @@
 <body>
 
 
-    <form action="/Start" method="post" enctype="multipart/form-data">
-        <p>
-            <label>Количество поколений</label>
-            <input class="inputs" type="number" value="20" required name="generations"/>
-        </p>
-        <p>
-            <label for="password">Количество потомков</label>
-            <input class="inputs" type="number" value="20" required name="individuals"/>
-        </p>
-
-        <label>Выберите алгоритм оптимизации:</label>
-        <select class="inputs">
-            <option>NSGA-2</option>
-        </select>
+    <form action="/Settings" method="post" enctype="multipart/form-data">
         <p>
             <label for="file">Выберите файлы для загрузки:</label>
             <input class="inputs" type="file" id="file" name="file" multiple/>

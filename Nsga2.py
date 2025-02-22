@@ -472,7 +472,7 @@ class Nsga2:
         ### Measures file
         ctr = 0     # how many solutions in the pareto front
         for i in range(self._population_size):
-            if self._population[i].rank() == 1: # adding only solution from pareto front (rank == 1)
+            if self._population[i].rank() == 1 and self._population[i].feasibility(): # adding only feasible solutions from pareto front (rank == 1)
                 # objectives
                 income = -self._population[i].objective(0)
                 risk = self._population[i].objective(1)

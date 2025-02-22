@@ -187,7 +187,7 @@ class Problem:
 
         constr, feasibility = self.constraints(enc, obj1, obj2)
         solution.set_constraints(constr)
-        solution.set_feaibility(feasibility)
+        solution.set_feasibility(feasibility)
 
         solution.set_eval(self._total_evaluations)
     
@@ -207,6 +207,32 @@ class Problem:
     
     # endregion evaluate functions
 
+    # region additional funny things
+    # combining everything into a single 2d list (for flask), result != None if optimization is done
+    def transform_data(self, result = None):
+        header = ['Название', 'Прибыль', 'Риск', 'Стоимость', 'Подразделение']
+        data_array = []
+        if len(self._project_names) != 0:
+            is_names = True
+        else:
+            is_names = False
+        
+        for i in range(self._C):
+            for j in range(self._N[i]):
+                proj = []
+                if is_names:    # название
+                    proj.append(self._project_names[i][j])
+                else:
+                    proj.append(str(i + 1) + '_' + str(j + 1))
+                proj.append(self._inc[i][j])
+                proj.append(self._risk[i][j])
+                proj.append(self._cost[i][j])
+                proj.append(self._filename[i])
+                
+                data_array.append(proj)
+            
+        return header, data_array
+    # endregion
 
 
     # getter functions
