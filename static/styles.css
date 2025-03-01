@@ -1,15 +1,37 @@
 body {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-    font-size: 20px;
-    
+	position: absolute;
+	top: 50%;
+	left: 40%;
+	transform: translate(-40%,-50%);
+	font-size: 16px;
+	font-family: Verdana, Arial, sans-serif;
 }
 
 p {
-    text-align: justify;
+    text-align: left;
 }
+
+#wrapper {
+	display: flex;
+
+}
+
+TD {
+	vertical-align: top;
+}
+
+#leftcol {
+	width: 80%;
+}
+
+#spacer {
+	width: 1.5%; /* Расстояние между колонками */
+}
+
+#rightcol {
+	width: 19.5%;
+}
+
 
 #button {
     background-color: #4CAF50;

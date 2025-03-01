@@ -1,7 +1,12 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\datasets",
+    "\\datasets\\krskmz",
+    "\\static",
+    "\\templates",
+    "\\uploads"
   ],
-  "SelectedNode": "\\C:\\Users\\Admin\\source\\repos\\AntonSopov\\IPOpt",
+  "SelectedNode": "\\Website.py",
   "PreviewInSolutionExplorer": false
 }

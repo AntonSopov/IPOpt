@@ -9,83 +9,117 @@
 
 
 <body>
-    <form action="/" method="post" enctype="multipart/form-data">
-        <p>
-            <input id="button" type="submit" value="Сбросить"/>
-        </p>
-    </form>
 
-    <div class="scroll-table">
-        <table>
-            <thead>
-                <tr>
-                    {% for header in headings %}
-                    <th>{{ header }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-        </table>	
-        <div class="scroll-table-body">
-            <table>
-                <tbody>
-                    {% for row in data %}
-                    <tr>
-                        {% for cell in row %}
-                        <td>{{ cell }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>	
-    </div>
+    <table cellspacing="0" id="maket">
+        <tr>
+            <td id="leftcol">
+                <div class="scroll-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for header in headings %}
+                                <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                    </table>
+                    <div class="scroll-table-body">
+                        <table>
+                            <tbody>
+                                {% for row in data %}
+                                <tr>
+                                    {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <p>
+                        <input id="button" type="submit" value="Сбросить" />
+                    </p>
+                </form>
+
+                <form action="/Start" method="post" enctype="multipart/form-data">
+                    <p>
+                        <label>Количество вычислений</label>
+                        <input class="inputs" type="number" value="2000" min=0 step=100 required name="fes" />
+                    </p>
+
+                    <p>
+                        <label>Инвестиционный бюджет</label>
+                        <input class="inputs" type="number" value="0" min=0 required name="invBudget" />
+                    </p>
+                    <p>
+                        <label>Максимальная прибыль</label>
+                        <input class="inputs" type="number" value="0" min=0 required name="maxInc" />
+                    </p>
+                    <p>
+                        <label>Максимальный риск</label>
+                        <input class="inputs" type="number" value="0.0" min=0 step=0.1 required name="maxRisk" />
+                    </p>
 
 
-    <form action="/Start" method="post" enctype="multipart/form-data">
-        <p>
-            <label>Количество вычислений</label>
-            <input class="inputs" type="number" value="2000" min = 0 step = 100 required name="fes"/>
-        </p>
-        </br>
-        <p>
-            <label>Инвестиционный бюджет</label>
-            <input class="inputs" type="number" value="0" min = 0 required name="invBudget"/>
-        </p>
-        <p>
-            <label>Максимальная прибыль</label>
-            <input class="inputs" type="number" value="0" min = 0 required name="maxInc"/>
-        </p>
-        <p>
-            <label>Максимальный риск</label>
-            <input class="inputs" type="number" value="0.0" min = 0 step = 0.1 required name="maxRisk"/>
-        </p>
 
-        </br>
-        <label>Дополнительные настройки</label>
-        </br>
-        <label>Выберите алгоритм оптимизации:</label>
-        <select class="inputs">
-            <option>NSGA-2</option>
-        </select>
-        <p>
-            <label for="password">Размер популяции</label>
-            <input class="inputs" type="number" value="20" min = 4 step = 4  required name="pop_size"/>
-        </p>
-        <p>
-            <label for="password">ε-уровень</label>
-            <input class="inputs" type="number" value="0.0" min = 0 step = 0.1 required name="epslevel"/>
-        </p>
-        <p>
-            <label for="password">Вероятность кроссовера (* длина хромосомы)</label>
-            <input class="inputs" type="number" value="1.0" min = 0 step = 0.1 required name="prob_crossover"/>
-        </p>
-        <p>
-            <label for="password">Вероятность мутации (* длина хромосомы)</label>
-            <input class="inputs" type="number" value="1.0" min = 0 step = 0.1  required name="prob_mutation"/>
-        </p>
-        <p>
-            <input id="button" type="submit" value="Начать оптимизацию"/>
-        </p>
-    </form>
+            </td>
+            <td id="spacer"></td>
+            <td id="rightcol">
+
+                
+
+                <p><label>Дополнительные настройки</label>
+                </p>
+                    
+                    
+                    <label>Выберите алгоритм оптимизации:</label>
+                    <select class="inputs">
+                        <option>NSGA-2</option>
+                    </select>
+                    <p>
+                        <label for="password">Размер популяции</label>
+                        <input class="inputs" type="number" value="20" min=4 step=4 required name="pop_size" />
+                    </p>
+                    <p>
+                        <label for="password">ε-уровень</label>
+                        <input class="inputs" type="number" value="0.0" min=0 step=0.1 required name="epslevel" />
+                    </p>
+                    <p>
+                        <label for="password">Вероятность кроссовера (* длина хромосомы)</label>
+                        <input class="inputs" type="number" value="1.0" min=0 step=0.1 required name="prob_crossover" />
+                    </p>
+                    <p>
+                        <label for="password">Вероятность мутации (* длина хромосомы)</label>
+                        <input class="inputs" type="number" value="1.0" min=0 step=0.1 required name="prob_mutation" />
+                    </p>
+                    <p>
+                        <input id="button" type="submit" value="Начать оптимизацию" />
+                    </p>
+                </form>
+
+
+            </td>
+        </tr>
+    </table>
+
+
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
 
 </body>
