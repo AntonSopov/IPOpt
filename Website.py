@@ -1,6 +1,19 @@
-﻿from flask import Flask, render_template, request
+﻿from turtle import title
+from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 import numpy as np
+
+from dash import Dash, dcc, html
+from dash.dependencies import Input, Output
+
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+import plotly.express as px
+
+
+import json
 
 import copy
 import Global as Gl
@@ -12,15 +25,54 @@ import os
 
 
 
+
 app = Flask(__name__)
-   
+dash = Dash(__name__, server=app, url_base_pathname='/results/')
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
    
+
+
+dash.layout = [
+    html.Div(children='Результаты работы алгоритма'),
+    html.Hr(),
+    html.Div(id='none',children=[],style={'display': 'none'}),
+    dcc.Graph(figure={}, id='graph'),
+    html.Pre(id='click-data')
+]
+
+
+
+def func(x):
+  #y = ma.sin(x)+ma.e**
+ return -7*np.sin(x) + 10*np.e**np.cos(x)+0.8*x
+
+
+
+@dash.callback(
+    Output(component_id='graph', component_property='figure'),
+    Input(component_id='none', component_property='value')
+)
+def update_graph(col_chosen):
+    x = np.arange(0, 5, 0.1)
+    y = func(x)
+    fig = px.line(x=x, y=y, title="Какая то функция")
+    return fig
+
+
+@dash.callback(
+    Output('click-data', 'children'),
+    Input('graph', 'clickData'))
+def display_click_data(clickData):
+    return json.dumps(clickData, indent=2)
+
+
+
 @app.route('/')
 def show_main_page():
     return render_template('file.html')
-   
+
+
 @app.route('/', methods=['POST'])
 def main_page_reset():
     return render_template('file.html')
@@ -83,8 +135,8 @@ def handle_file_upload():
             'filename': 'result_test'
         }
         Gl.problem.optimize('nsga2', opt_params)
-
-        return "Yay"
+        
+        return redirect("/results")
 
 
 if __name__ == '__main__':
