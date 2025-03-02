@@ -8,8 +8,6 @@ from dash.dependencies import Input, Output
 
 import pandas as pd
 
-import matplotlib.pyplot as plt
-
 import plotly.express as px
 
 
@@ -27,13 +25,13 @@ import os
 
 
 app = Flask(__name__)
-dash = Dash(__name__, server=app, url_base_pathname='/results/')
+dash = Dash(__name__, server=app, url_base_pathname='/results/')#Эта штука для создания даша внутри фласка по пути /results/
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
    
 
 
-dash.layout = [
+dash.layout = [#Эта штука для создания тела дашы
     html.Div(children='Результаты работы алгоритма'),
     html.Hr(),
     html.Div(id='none',children=[],style={'display': 'none'}),
@@ -49,7 +47,7 @@ def func(x):
 
 
 
-@dash.callback(
+@dash.callback(#Штука что обновляет график для какой то функции, в данном случае func
     Output(component_id='graph', component_property='figure'),
     Input(component_id='none', component_property='value')
 )
@@ -60,7 +58,7 @@ def update_graph(col_chosen):
     return fig
 
 
-@dash.callback(
+@dash.callback(#Эта штука выводит данные о клике на графике
     Output('click-data', 'children'),
     Input('graph', 'clickData'))
 def display_click_data(clickData):
