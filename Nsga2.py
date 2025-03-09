@@ -491,3 +491,50 @@ class Nsga2:
         # saving dataframes
         df_measures.to_csv(f'{self._filename}_measures.csv')
         df_portfolio.to_csv(f'{self._filename}_portfolio.csv')
+
+    
+    # создаёт набор словарей с информацией о каждом индивиде
+    # bool Output : генерировать файлы или нет
+    def generate_results(self, output = False):
+        self.nondominated_sorting(self._population) # в последний раз проводим недоминируемую сортировку, чтобы определить фронт Парето
+
+        solution_info = []  # инициализация списка словарей
+
+        if output:         # инициализация датафреймов (если нужно) 
+            df_measures = pd.DataFrame()
+            df_portfolio = pd.DataFrame()
+
+        # список значений целевой функции (для датафрейма и проверок)
+        income_risk = []
+
+        ctr = 0             # счётчик подходящих решений
+        for i in range(self._population_size):
+            # решение должно находиться во фронте Парето (rank == 1) и удовлетворять ограничениям
+            if self._population[i].rank() == 1 and self._population[i].feasibility():
+                # значения целевых функций
+                income = -self._population[i].objective(0)
+                risk = self._population[i].objective(1)
+                if not ([income, risk] in income_risk): # нет ли уже индивида с такими показателями
+                    income_risk.append([income, risk])
+                
+                # создание словаря
+                solution_dict = {}
+                solution_dict['Прибыль'] = income
+                solution_dict['Риск'] = risk
+                solution_dict['Портфель'] = self._population[i].encoding()
+
+                # добавление словаря в список
+                solution_info.append(solution_dict)
+        
+        # создание датафреймов
+        if output:    
+            # finalizing measures dataframe
+            income_risk_array = np.array(income_risk)
+            df_measures['income'] = income_risk_array[:,0]
+            df_measures['risk'] = income_risk_array[:,1]
+            
+            # saving dataframes
+            df_measures.to_csv(f'{self._filename}_measures.csv')
+            df_portfolio.to_csv(f'{self._filename}_portfolio.csv')
+        
+        return solution_dict

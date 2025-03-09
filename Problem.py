@@ -208,14 +208,18 @@ class Problem:
     # endregion evaluate functions
 
     # region additional funny things
-    # combining everything into a single 2d list (for flask), result != None if optimization is done
-    def transform_data(self, result = None):
+    # combining everything into a single 2d list (for flask), enc != None if optimization is done
+    def transform_data(self, enc = None):
         header = ['Название', 'Прибыль', 'Риск', 'Стоимость', 'Подразделение']
         data_array = []
         if len(self._project_names) != 0:
             is_names = True
         else:
             is_names = False
+        
+        if enc != None:
+            header.append('Портфель')
+            encoding = self.transform_encoding(enc)
         
         for i in range(self._C):
             for j in range(self._N[i]):
@@ -228,12 +232,14 @@ class Problem:
                 proj.append(self._risk[i][j])
                 proj.append(self._cost[i][j])
                 proj.append(self._filename[i])
+
+                if enc != None:
+                    proj.append(self.encoding[i][j])
                 
                 data_array.append(proj)
             
         return header, data_array
     # endregion
-
 
     # getter functions
     def encoding_length(self): return self._encoding_length
