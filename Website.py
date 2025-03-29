@@ -18,6 +18,8 @@ import Global as Gl
 from Nsga2 import *
 from Problem import *
 
+from operator import itemgetter
+from operator import attrgetter
   
 import os 
 
@@ -28,6 +30,7 @@ app = Flask(__name__)
 dash = Dash(__name__, server=app, url_base_pathname='/results/')#Эта штука для создания даша внутри фласка по пути /results/
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+font = {'font-size' : '2rem'}
    
 
 
@@ -40,21 +43,23 @@ dash.layout = [#Эта штука для создания тела дашы
 ]
 
 
-
-def func(x):
-  #y = ma.sin(x)+ma.e**
- return -7*np.sin(x) + 10*np.e**np.cos(x)+0.8*x
-
-
-
 @dash.callback(#Штука что обновляет график для какой то функции, в данном случае func
     Output(component_id='graph', component_property='figure'),
     Input(component_id='none', component_property='value')
 )
 def update_graph(col_chosen):
-    x = np.arange(0, 5, 0.1)
-    y = func(x)
-    fig = px.line(x=x, y=y, title="Какая то функция")
+    for i in range(len(Gl.solutions)):
+        Gl.sorting_indices.append([i, Gl.solutions[i]['Прибыль']]) 
+    Gl.sorting_indices.sort(key = lambda x: x[1])
+    x = []
+    y = []
+    for i in range(len(Gl.solutions)):
+        x.append(Gl.solutions[Gl.sorting_indices[i][0]]['Прибыль'])
+        y.append(Gl.solutions[Gl.sorting_indices[i][0]]['Риск'])
+    
+    fig = px.line(x=x, y =y, title="Наведите на точку на графике, чтобы посмотреть информацию о решении.", markers=True, labels={'x': 'Прибыль', 'y':'Риск'})
+    #fig.update_traces(line=dict(color="green", width=2.5)) # настройка стиля кривой
+    fig.update_traces(marker=dict(size=10))
     return fig
 
 
@@ -62,7 +67,23 @@ def update_graph(col_chosen):
     Output('click-data', 'children'),
     Input('graph', 'clickData'))
 def display_click_data(clickData):
-    return json.dumps(clickData, indent=2)
+    click_index = Gl.sorting_indices[clickData['points'][0]['pointIndex']][0]
+    print(click_index, "  ", clickData['points'][0]['pointIndex'])
+    solution_text_info = "\tИнформация о решении:\n\n\tПрибыль: " + str(round(Gl.solutions[click_index]["Прибыль"], 4)) + "\n\tРиск: " + str(round(Gl.solutions[click_index]["Риск"], 4))  
+    solution_text_info += "\n\n\tСписок проектов, входящих в портфель:\n"
+    prj_ctr = 0
+    for i in range(len(Gl.problem._project_names)):
+        solutions_present = 0
+        solution_text_info += "\n\tГруппа проектов №" + str (i+1) + ':\t'
+        for j in range(len(Gl.problem._project_names[i])):
+            if Gl.solutions[click_index]["Портфель"][prj_ctr] == 1:
+                solution_text_info += str(Gl.problem._project_names[i][j]) + '  '
+                solutions_present = 1
+            prj_ctr +=1
+        if solutions_present == 0:
+            solution_text_info += "-"
+    return solution_text_info
+    #return json.dumps(clickData, indent=2)
 
 
 
@@ -132,8 +153,9 @@ def handle_file_upload():
             'eps': amount_epslevel,
             'filename': 'result_test'
         }
-        Gl.problem.optimize('nsga2', opt_params)
-        
+
+        Gl.solutions = copy.deepcopy(Gl.problem.optimize('nsga2', opt_params))
+
         return redirect("/results")
 
 

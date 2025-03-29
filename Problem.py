@@ -108,7 +108,8 @@ class Problem:
         if method == 'nsga2':
             optimizer = Nsga2.Nsga2(opt_params, verbose = 1)
             optimizer.run()
-            optimizer.output_generation()
+            #optimizer.output_generation()                                               
+            return optimizer.generate_results(output = True)
 
 
     # region objectives

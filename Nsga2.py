@@ -506,35 +506,50 @@ class Nsga2:
 
         # список значений целевой функции (для датафрейма и проверок)
         income_risk = []
-
+        portfolio = []
         ctr = 0             # счётчик подходящих решений
         for i in range(self._population_size):
             # решение должно находиться во фронте Парето (rank == 1) и удовлетворять ограничениям
+            #print(self._population[i].rank())
+            #print(self._population[i].feasibility())
             if self._population[i].rank() == 1 and self._population[i].feasibility():
                 # значения целевых функций
                 income = -self._population[i].objective(0)
                 risk = self._population[i].objective(1)
                 if not ([income, risk] in income_risk): # нет ли уже индивида с такими показателями
                     income_risk.append([income, risk])
-                
-                # создание словаря
-                solution_dict = {}
-                solution_dict['Прибыль'] = income
-                solution_dict['Риск'] = risk
-                solution_dict['Портфель'] = self._population[i].encoding()
+                    portfolio.append(self._population[i].encoding())
+                    ctr += 1
+                    # создание словаря
+                    solution_dict = {}
+                    solution_dict['Прибыль'] = income
+                    solution_dict['Риск'] = risk
+                    solution_dict['Портфель'] = self._population[i].encoding()
+                    
+                    # добавление словаря в список
+                    solution_info.append(solution_dict)
+                    
 
-                # добавление словаря в список
-                solution_info.append(solution_dict)
-        
+                    
         # создание датафреймов
         if output:    
             # finalizing measures dataframe
             income_risk_array = np.array(income_risk)
             df_measures['income'] = income_risk_array[:,0]
             df_measures['risk'] = income_risk_array[:,1]
-            
+            df_measures.index.name = 'index'
+
+            # finalizing portfolio dataframe
+            col_names = []
+            for i in range(len(Gl.problem._project_names)):
+                for j in range(len(Gl.problem._project_names[i])):
+                    col_names.append(Gl.problem._project_names[i][j])
+            df_portfolio = pd.DataFrame(portfolio)
+            df_portfolio.index.name = 'index'
+            df_portfolio.columns = col_names
+
             # saving dataframes
             df_measures.to_csv(f'{self._filename}_measures.csv')
             df_portfolio.to_csv(f'{self._filename}_portfolio.csv')
         
-        return solution_dict
+        return solution_info
